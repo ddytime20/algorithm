@@ -1,2 +1,2 @@
 # test_repository
-for test
+algorithm
