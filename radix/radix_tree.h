@@ -1,4 +1,5 @@
-
+#ifndef _RADIX_TREE_H_
+#define _RADIX_TREE_H_
 
 #define RADIX_TREE_MAP_SHIFT  3U
 #define RADIX_TREE_MAP_SIZE (1UL << RADIX_TREE_MAP_SHIFT)
@@ -46,3 +47,5 @@ extern void *radix_tree_delete(struct radix_tree_root *root,
 
 extern void * radix_tree_lookup(struct radix_tree_root *root,
 		unsigned long index);
+
+#endif
