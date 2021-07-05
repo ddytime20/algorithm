@@ -3,8 +3,8 @@
  *
  */
 
-#ifndef __LIST_H__
-#define __LIST_H__
+#ifndef _LIST_H_
+#define _LIST_H_
 
 #include <stddef.h>
 
@@ -216,4 +216,4 @@ static inline void list_move_head( struct list *dst, struct list *src )
 #define LIST_ENTRY(elem, type, field) \
     ((type *)((char *)(elem) - offsetof(type, field)))
 
-#endif  /* __LIST_H __*/
+#endif  /* _LIST_H _*/
