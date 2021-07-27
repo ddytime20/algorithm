@@ -40,7 +40,7 @@ static inline void suffix(unsigned char *pat, int patlen, int *suffix)
     int i, j, g;
     suffix[patlen-1] = patlen;
     j = patlen - 1;
-    for (i = patlen-2; i > 0; i--){
+    for (i = patlen-2; i >= 0; i--){
 #ifndef  DEFINE_BM_SUFFIX
         //可能多数的模式串中不存在好后缀，直接对每个做匹配
         j = i;
