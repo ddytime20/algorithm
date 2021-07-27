@@ -12,8 +12,51 @@
     const typeof(a) _a = a; \
     const typeof(b) _b = b; \
     _a > _b ? _a : _b; })
-
 #endif
+
+//patter compare from right to left
+static inline unsigned int _bm_memcpy(unsigned char *text, unsigned char *pat, unsigned int len)
+{
+   unsigned char *c1, *c2;
+   for (c1 = text, c2 = pat; 0 < len; c1--, c2--, len--){
+       if (*c1 != *c2)
+           break;
+   }
+
+   return len;
+}
+
+void BMs_Prepare(unsigned char *pat, int patlen, struct BmsS *bms)
+{
+    int i;
+    
+    for (i = 0; i < ASIZE; i++){
+        bms->BmBc[i] = patlen;
+    }
+
+    for (i = 0; i < patlen - 1; i++){
+        bms->BmBc[pat[i]] = patlen - 1 - i;
+    }
+}
+
+
+void BMs_Search(unsigned char *text, int textlen, unsigned char *pat, int patlen, 
+                struct BmsS *bms)
+{
+    if (!patlen)
+        return -1;
+
+    unsigned char *pattail = &pat[patlen-1];
+    int index = patlen - 1;
+    while (index < textlen){
+        if (*pattail == text[index] &&
+                0 == _bm_memcpy(&text[index], pattail, patlen)){
+            printf("find patten %d\n", index);
+        }
+        index += bms->BmBc[text[index]];
+    }
+}
+
 
 static inline void preBmBc(unsigned char *pat, int patlen, struct BmS *bms)
 {
@@ -21,7 +64,7 @@ static inline void preBmBc(unsigned char *pat, int patlen, struct BmS *bms)
 
     //未存在的字符偏移模式串长度
     for (i = 0; i < ASIZE; i++){
-        bms->BmBc[i] = (unsigned char)patlen;
+        bms->BmBc[i] = patlen;
     }
     //坏字符在模式串最右边的位置
     for (i = 0; i < patlen-1; i++){
@@ -99,7 +142,6 @@ static inline void preBmGs(unsigned char *pat, int patlen, struct BmS *bms)
     for (i = 0; i < patlen - 2; i++){
         bms->BmGs[patlen-1-suff[i]] = patlen - 1 - i;
     }
-
 }
 
 void BM_Prepare(unsigned char *pat, int patlen, struct BmS *bms)
