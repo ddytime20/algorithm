@@ -41,17 +41,19 @@ void BMs_Prepare(unsigned char *pat, int patlen, struct BmsS *bms)
 
 
 void BMs_Search(unsigned char *text, int textlen, unsigned char *pat, int patlen, 
-                struct BmsS *bms)
+                int *count, struct BmsS *bms)
 {
-    if (!patlen)
-        return -1;
-
+    int i = 0;
     unsigned char *pattail = &pat[patlen-1];
     int index = patlen - 1;
     while (index < textlen){
         if (*pattail == text[index] &&
                 0 == _bm_memcpy(&text[index], pattail, patlen)){
-            printf("find patten %d\n", index);
+            printf("find patten %d\n", index+1-patlen);
+            if (i < COUNTMAX)
+                count[i++] = index + 1 - patlen;
+            else
+                break;
         }
         index += bms->BmBc[text[index]];
     }
@@ -151,15 +153,20 @@ void BM_Prepare(unsigned char *pat, int patlen, struct BmS *bms)
 }
 
 void BM_Search(unsigned char *text, int textlen, unsigned char *pat,
-        int patlen, struct BmS *bms)
+        int patlen,int *count; struct BmS *bms)
 {
-    int i, j;
+    int i, j, g;
 
+    g = 0
     j = 0;
     while (j <= textlen - patlen){
         for (i = patlen - 1; i >= 0 && pat[i] == text[i+j]; i--);
         if (i < 0){
             printf("find pat index %d\n", j);
+            if (g < COUNTMAX)
+                count[g++] = j;
+            else
+                break;
             j += bms->BmGs[0];
         }
         else
