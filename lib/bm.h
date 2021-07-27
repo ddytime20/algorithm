@@ -2,8 +2,9 @@
 
 #define _BM_H_
 
-#define PATSIZE 128
-#define ASIZE 256
+#define COUNTMAX   64
+#define PATSIZE    128
+#define ASIZE      256
 
 struct BmS
 {
