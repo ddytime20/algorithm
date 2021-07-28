@@ -17,15 +17,15 @@ struct BmsS
     unsigned char BmBc[ASIZE];
 };
 
-void BMs_Prepare(unsigned char *pat; int patlen, struct BmsS *bms);
+void BMs_Prepare(unsigned char *pat, int patlen, struct BmsS *bms);
 
 void BMs_Search(unsigned char *text, int textlen, unsigned char *pat,
-        int patlen, struct BmsS *bms);
+        int patlen, int *count, struct BmsS *bms);
 
 void BM_Prepare(unsigned char *pat, int patlen, struct BmS *bms);
 
 void BM_Search(unsigned char *text, int textlen, unsigned char *pat,
-        int patlen, struct BmS *bms);
+        int patlen, int *count, struct BmS *bms);
 
 
 #endif
