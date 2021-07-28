@@ -30,6 +30,7 @@ static inline unsigned int _bm_memcpy(unsigned char *text, unsigned char *pat, u
    return len;
 }
 
+//bm算法简单实现中bad character实现
 void BMs_Prepare(unsigned char *pat, int patlen, struct BmsS *bms)
 {
     int i;
