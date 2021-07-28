@@ -3,7 +3,7 @@
 #include "bm.h"
 
 /*
- * bm 算法完整实现
+ * bm 算法实现
  */
 
 
@@ -14,7 +14,12 @@
     _a > _b ? _a : _b; })
 #endif
 
-//patter compare from right to left
+/*
+ * bm算法简单实现,只考虑bad character,匹配时每次失配都把匹配的第一个字符当作bad character
+ * 该实现在短字符串匹配中可能效率较高，实现简单
+ */
+
+//
 static inline unsigned int _bm_memcpy(unsigned char *text, unsigned char *pat, unsigned int len)
 {
    unsigned char *c1, *c2;
@@ -22,7 +27,6 @@ static inline unsigned int _bm_memcpy(unsigned char *text, unsigned char *pat, u
        if (*c1 != *c2)
            break;
    }
-
    return len;
 }
 
@@ -39,7 +43,7 @@ void BMs_Prepare(unsigned char *pat, int patlen, struct BmsS *bms)
     }
 }
 
-
+//bm简单实现匹配接口
 void BMs_Search(unsigned char *text, int textlen, unsigned char *pat, int patlen, 
                 int *count, struct BmsS *bms)
 {
@@ -60,6 +64,11 @@ void BMs_Search(unsigned char *text, int textlen, unsigned char *pat, int patlen
 }
 
 
+
+/*
+ * bm算法完整实现，将bad character和good suffix加入
+ * 在较长的字符串匹配中可能性能较好
+ */
 static inline void preBmBc(unsigned char *pat, int patlen, struct BmS *bms)
 {
     int i;
@@ -114,9 +123,16 @@ static inline void suffix(unsigned char *pat, int patlen, int *suffix)
 
 
 /*
- * 获取good suffix
- * 1.先从pat中获取每一位和最右边具有相同字符串的个数
- * 2.
+ * 获取good suffix:从pat中获取已经匹配上的字符串子集都是good suffix;
+ * 分两种；子集在pat中间，这种只针对已匹配固定位置失配后偏移;子集到结尾，
+ * 这种对固定范围内失配后可以偏移到该位置，若两种情况都符合则以第一种偏
+ * 移为准因为第一种偏移的比第二种短
+ * 1.先从pat中获取每一位和最右边具有相同字符串的个数,可以确定子集到结尾
+ * 属于第二种情况,对于这种情况需要确定子集的长度（也就是到结尾的长度）
+ * 也就是说失配的位置长度要大于等于这个长度则可以从这里移动到这里开始，
+ * （但是若命中第二种情况则以第二种情况移动）
+ * 2.这种情况是pat中间（good suffix未到最后）存在good suffix，失配的位置
+ * 一定和good suffix长度一样长
  */
 static inline void preBmGs(unsigned char *pat, int patlen, struct BmS *bms)
 {
@@ -131,9 +147,9 @@ static inline void preBmGs(unsigned char *pat, int patlen, struct BmS *bms)
     }
 
     j = 0;
-    //
+    //第二种情况
     for (i = patlen - 1; i >= 0; i--){
-        //从i开始到尾都能和pat从右开始匹配上
+        //这个判断可以确定一定good suffix一定到尾了
         if (suff[i] == i + 1)
             for (; j < patlen - 1 - i; j++){
                 if (bms->BmGs[j] == patlen)
@@ -141,23 +157,27 @@ static inline void preBmGs(unsigned char *pat, int patlen, struct BmS *bms)
             }
     }
 
+    //第一种情况
     for (i = 0; i < patlen - 2; i++){
+        //失配位置等于good suffix长度，这种也包括上面的情况若存在等于
         bms->BmGs[patlen-1-suff[i]] = patlen - 1 - i;
     }
 }
 
 void BM_Prepare(unsigned char *pat, int patlen, struct BmS *bms)
 {
+    //prepare good suffix
     preBmGs(pat, patlen, bms);
+    //prepare bad character
     preBmBc(pat, patlen, bms);
 }
 
 void BM_Search(unsigned char *text, int textlen, unsigned char *pat,
-        int patlen,int *count; struct BmS *bms)
+        int patlen,int *count, struct BmS *bms)
 {
     int i, j, g;
 
-    g = 0
+    g = 0;
     j = 0;
     while (j <= textlen - patlen){
         for (i = patlen - 1; i >= 0 && pat[i] == text[i+j]; i--);
