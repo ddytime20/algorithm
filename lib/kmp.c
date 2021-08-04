@@ -1,7 +1,6 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include "kmp.h"
-
+#include "debug.h"
 
 /*
  * KMP算法实现
@@ -42,7 +41,7 @@ void KMP_Search(unsigned char *text, int textlen, unsigned char *pat,
 
     next = (int *)mallec(sizeof(int) * patlen);
     if (NULL == next)
-        return;
+        FatalError("out of memory");
 
     j = 0;
     i = 0;
