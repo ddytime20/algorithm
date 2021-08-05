@@ -1,4 +1,6 @@
 #include <stdlib.h>
+#include "bheap.h"
+#include "debug.h"
 
 #define MinSize (10)
 
@@ -45,10 +47,10 @@ tp Heap_Delete(heap_t *h)
     first = h->array[1];
     last = h->array[h->size--];
 
-    for (i = 1; i*2 < h->array[h->size]; i = child){
+    for (i = 1; i*2 < h->size; i = child){
         //get child id; 
         child = i * 2;
-        //not exist right child and right child small left
+        //not exist right child and right child small than left
         if (child != h->size && h->array[child + 1] < h->array[child])
             child++;
 
