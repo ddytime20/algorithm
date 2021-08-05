@@ -9,7 +9,7 @@
  */
 static inline void heap_init(heap_t *h, int max)
 {
-    h->array = (tp *)malloc(sizeof(tp) * (max + 1));
+    h->array = (et *)malloc(sizeof(et) * (max + 1));
     if (NULL == h->array)
         Error("heap_init: out of memeory");
 
@@ -19,9 +19,9 @@ static inline void heap_init(heap_t *h, int max)
 }
 
 /*
- * find samller tp in heap
+ * find samller et in heap
  */
-tp Heap_FindMin(heap_t *h)
+et Heap_FindMin(heap_t *h)
 {
     if (Heap_IsEmpty(h)){
         Trace("heap find min: heap is empty");
@@ -32,12 +32,12 @@ tp Heap_FindMin(heap_t *h)
 }
 
 /*
- * delete smaller tp from heap
+ * delete smaller et from heap
  */
-tp Heap_Delete(heap_t *h)
+et Heap_Delete(heap_t *h)
 {
     int i, child;
-    tp last, first;
+    et last, first;
 
     if (Heap_IsEmpty(h)) {
         Trace("heap_delete:heap is empty");
@@ -67,7 +67,7 @@ tp Heap_Delete(heap_t *h)
 /*
  * insert x to heap x;
  */
-void Heap_Insert(heap_t *h, tp x)
+void Heap_Insert(heap_t *h, et x)
 {
     int i;
 
@@ -76,7 +76,7 @@ void Heap_Insert(heap_t *h, tp x)
         return;
     }
 
-    //init array[0] is the smaller in tp
+    //init array[0] is the smaller in et 
     for ( i = ++h->size; h->array[i/2] > x; i /=2)
         h->array[i] = h->array[i/2];
     h->array[i] = x;
