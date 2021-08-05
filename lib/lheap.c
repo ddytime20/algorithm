@@ -6,7 +6,6 @@
 /*
  * leftist heap
  */
-
 static inline swap_child(lheap_t *h)
 {
     lnode_t *tmp;
@@ -90,7 +89,7 @@ lheap_t *Lheap_Insert1(et x, lheap_t *h)
 /*
  * delete min element from h
  */
-lheap_t *Lheap_Delete(lheap_t *h)
+lheap_t *Lheap_Delete1(lheap_t *h)
 {
     lnode_t *left, *right;
 
@@ -115,7 +114,7 @@ et Lheap_FindMin(lheap_t *h)
     return h->element;
 }
 
-void Lheap_Destry(lheap_t *h)
+void Lheap_Destroy(lheap_t *h)
 {
     if (NULL == h)
         return;
