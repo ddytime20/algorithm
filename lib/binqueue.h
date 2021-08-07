@@ -4,19 +4,20 @@
 
 #define MAX_TREE (14) /* store 2^14 - 1 */
 #define CAPACITY (16383) /* 2^14 - 1 */ 
+#define INFINITY (20000L) /* MAX */
 typedef int ET;
 
 typedef struct BinNode
 {
     ET Element;
-    struct BinNode LeftChild;
-    struct BinNode NextSibling;
+    struct BinNode *LeftChild;
+    struct BinNode *NextSibling;
 }BinNode;
 
 typedef struct BinQueue
 {
     int Size;
-    struct BinNode *Tree[MAX_TREE];
+    struct BinNode *Trees[MAX_TREE];
 }BinQueue;
 
 BinQueue *Bqueue_Create(void);
