@@ -1,6 +1,6 @@
 #include <stdlib.h>
-#include <binqueue.h>
-#include <debug.h>
+#include "binqueue.h"
+#include "debug.h"
 
 /*
  * binomail queue
@@ -26,7 +26,7 @@ static inline void DestroyTree(BinNode *n)
 static inline BinNode *CombineTree(BinNode *n1, BinNode *n2)
 {
     if (n1->Element > n2->Element)
-        return bqueue_combintree(n2, n1);
+        return CombineTree(n2, n1);
 
     n2->NextSibling = n1->LeftChild;
     n1->LeftChild = n2;
@@ -46,11 +46,11 @@ BinQueue *Bqueue_Create(void)
     q = (BinQueue *)malloc(sizeof(BinQueue));
     if (NULL == q){
         Trace("bqueue_create: out of memory");
-        return NULL:
+        return NULL;
     }
 
     q->Size = 0;
-    for (i = 0; i < MAXSIZE; i++){
+    for (i = 0; i < MAX_TREE; i++){
         q->Trees[i] = NULL;
     }
 
@@ -66,14 +66,14 @@ BinQueue *Bqueue_Create(void)
  */
 BinQueue *Bqueue_Merge(BinQueue *q1, BinQueue *q2)
 {
-    BinNode *n1, *n2, *carry;
+    BinNode *n1, *n2, *carry = NULL;
     int i, j;
 
     if (q1->Size + q2->Size > CAPACITY)
         Error("bqueue_merge:merge too big");
 
     q1->Size += q2->Size;
-    for (i = 0, j = 1; i <= q1->Size; i++, j *= 2){
+    for (i = 0, j = 1; j <= q1->Size; i++, j *= 2){
         n1 = q1->Trees[i];
         n2 = q2->Trees[i];
         switch(!!n1 + 2 * !!n2 + 4 * !!carry){
@@ -91,18 +91,19 @@ BinQueue *Bqueue_Merge(BinQueue *q1, BinQueue *q2)
                 break;
             case 4: /* only carry */
                 q1->Trees[i] = carry;
+                carry = NULL;
                 break;
             case 5: /* n1 and carry */
-                carry = CombinTree(n1, carry);
+                carry = CombineTree(n1, carry);
                 q1->Trees[i] = NULL;
                 break;
             case 6: /* n2 and carry */
-                carry = CombinTree(n2, carry);
+                carry = CombineTree(n2, carry);
                 q2->Trees[i] = NULL;
                 break;
             case 7: /* all three */
                 q1->Trees[i] = carry;
-                carry = CombinTree(n1, n2);
+                carry = CombineTree(n1, n2);
                 q2->Trees[i] = NULL;
                 break;
         }
@@ -171,7 +172,7 @@ ET Bqueue_Delete(BinQueue *q)
 {
     ET MinItem;
     int i, MinTree;
-    BinNode *DelNode, OldRoot;
+    BinNode *DelNode, *OldRoot;
     BinQueue *Newq;
 
     if (Bqueue_IsEmpty(q)){
@@ -199,7 +200,7 @@ ET Bqueue_Delete(BinQueue *q)
     DelNode = DelNode->LeftChild;
     free(OldRoot);    
 
-    Newq->Size = (1 << MinTree) - 1
+    Newq->Size = (1 << MinTree) - 1;
     for (i = MinTree-1; i >= 0; i--){
         Newq->Trees[i] = DelNode;
         DelNode = DelNode->NextSibling;
@@ -207,7 +208,7 @@ ET Bqueue_Delete(BinQueue *q)
     }
 
     q->Trees[MinTree] = NULL;
-    q->Size -= Newq->Size; 
+    q->Size -= Newq->Size + 1; 
 
     Bqueue_Merge(q, Newq);
 
@@ -247,7 +248,7 @@ ET Bqueue_FindMin(BinQueue *q)
         return 0;
     }
     MinItem = CAPACITY;
-    for (i = 0; i < MAX_SIZE; i++){
+    for (i = 0; i < MAX_TREE; i++){
         if (q->Trees[i] &&
                 MinItem > q->Trees[i]->Element){
             MinItem = q->Trees[i]->Element;
