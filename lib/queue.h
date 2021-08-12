@@ -15,7 +15,7 @@ typedef struct Queue
     ElementType Array[1];
 }Queue;
 
-Queue *CreateQueue(int max);
+Queue *Queue_Create(int max);
 void Queue_Destroy(Queue *Q);
 int Queue_IsFull(Queue *Q);
 int Queue_IsEmpty(Queue *Q);
