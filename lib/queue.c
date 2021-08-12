@@ -19,7 +19,7 @@ int Queue_IsFull(Queue *Q)
 /*
  * Queue is empty
  */
-int Queue_IsEmpyt(Queue *Q)
+int Queue_IsEmpty(Queue *Q)
 {
     return Q->Size == 0;
 }
@@ -58,7 +58,7 @@ ElementType Queue_Front(Queue *Q)
 /*
  * Queue dequeue
  */
-void Queue_Enquee(ElementType x, Queue *Q)
+void Queue_Enqueue(ElementType x, Queue *Q)
 {
     if (Queue_IsFull(Q))
         return;
@@ -73,7 +73,7 @@ void Queue_Enquee(ElementType x, Queue *Q)
 /*
  * Create queue
  */
-Queue *Create_Queue( int Max)
+Queue *Queue_Create( int Max)
 {
     Queue *Q;
 
@@ -83,7 +83,7 @@ Queue *Create_Queue( int Max)
         return NULL;
     }
 
-    Q = (Queue *)malloc(sizeof(ElementType)*(MAX -1) + sizeof(Queue));
+    Q = (Queue *)malloc(sizeof(ElementType)*(Max-1) + sizeof(Queue));
     if (NULL == Q)
     {
         Trace("create_queue: out of memory");
