@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
     Handle = Ac_CreateHandle();
     if (INVALID_HANDLE == Handle)
     {
-        debug_printf("invalid ac hadndle \n");        
+        AC_PRINTF("invalid ac hadndle \n");        
         return 0;
     }
     Num = sizeof(Patterns)/sizeof(pattern_s);
@@ -64,5 +64,4 @@ int main(int argc, char *argv[])
     }
 
     return 0;
-
 }
