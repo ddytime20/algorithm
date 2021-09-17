@@ -15,7 +15,7 @@ void Assert(char *filename, unsigned int line)
     abort();
 }
 
-void debug_printf(char *format, ...)
+void AC_PRINTF(char *format, ...)
 {
     va_list args;
     va_start(args, format);
