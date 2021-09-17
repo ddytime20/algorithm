@@ -7,6 +7,7 @@
 #include <string.h>
 #include "basetype.h"
 #include "ac_mem.h"
+#include "debug.h"
 
 /*
  * Enlarge ac memory pool
@@ -28,7 +29,7 @@ static Uint _EnlargeMemPool(ac_mem_pool_s *pstMemPool)
     pPoolList = AC_REALLOC(pstMemPool->PoolList, (sizeof(Byte *) * (pstMemPool->PoolNum + 1)));
     if (NULL == pPoolList)
     {
-        printf("ac_mem, realloc pool list failed \n");
+        AC_PRINTF("ac_mem, realloc pool list failed \n");
         AC_FREE(pPool);
         return ERROR_MEM;
     }
@@ -43,7 +44,7 @@ static Uint _EnlargeMemPool(ac_mem_pool_s *pstMemPool)
 /*
  * AC get one node form memory pool
  */
-void *Ac_MemPoll_Malloc_Node(ac_mem_pool_s *pstMemPool, Uint *pNid)
+void *Ac_MemPool_Malloc_Node(ac_mem_pool_s *pstMemPool, Uint *pNid)
 {
     Uint uiPoolId;
     Uint uiOffset;
@@ -53,7 +54,7 @@ void *Ac_MemPoll_Malloc_Node(ac_mem_pool_s *pstMemPool, Uint *pNid)
     {
         if (ERROR_SUCCESS != _EnlargeMemPool(pstMemPool))
         {
-            printf("ac_mem, malloc node enlarge pool failed \n");
+            AC_PRINTF("ac_mem, malloc node enlarge pool failed \n");
             return NULL;
         }
     }
