@@ -40,7 +40,7 @@ static void _WalkForEachPath(ac_mem_pool_s *pMemPool, dlist_head_s *pStateList,
 static void _MakeLayer(ac_trie_s *pTrie)
 {
     ac_tmp_state_s *State;
-    ac_mem_pool_s *MemPool = pTrie->TmpPool;
+    ac_mem_pool_s *MemPool = pTrie->pTmpPool;
     dlist_head_s *StateList = &pTrie->StateList;
 
     State = AC_GETROOTSTATE(MemPool);
@@ -63,7 +63,7 @@ static ac_tmp_state_s *_GetFailState(ac_mem_pool_s *pMemPool, ac_tmp_state_s *pS
     Uint FailID;
     ac_tmp_state_s *FailState;
 
-    FailID = pState->FailedID;
+    FailID = pState->FailStateID;
     if (AC_INVALID_FAIL_ID == FailID)
     {
         return NULL;
@@ -146,12 +146,12 @@ static void _SetFailState(ac_mem_pool_s *pMemPool, ac_tmp_state_s *pFatherState)
         if (ChildFailState)
         {
             // if get failed node, set failed jump node;
-            ChildState->FailedID = ChildFailState->StateID;
+            ChildState->FailStateID = ChildFailState->StateID;
         }
         else
         {
             // if not find failed node, set failed jump node to root;
-            ChildState->FailedID = 0; // root
+            ChildState->FailStateID = 0; // root
         }
     }
     
@@ -162,13 +162,13 @@ static void _SetFailState(ac_mem_pool_s *pMemPool, ac_tmp_state_s *pFatherState)
 static void _MakeFailureState(ac_trie_s *pTrie)
 {
     ac_tmp_state_s *State;
-    ac_mem_pool_s *MemPool = pTrie->TmpPool;
+    ac_mem_pool_s *MemPool = pTrie->pTmpPool;
 
     /*
      * set root state, like kvm next[0] = -1;
      */
     State = AC_GETROOTSTATE(MemPool); 
-    State->FailedID = AC_INVALID_FAIL_ID;
+    State->FailStateID = AC_INVALID_FAIL_ID;
 
     /*
      * walk every node set fail state;
@@ -213,7 +213,7 @@ static Uint _InheritPid(ac_trie_s *pTrie)
     
     DLIST_FOREACH_ENTRY(&pTrie->StateList, State, Node)
     {
-        FailState = _GetFailState(pTrie->TmpPool, State);
+        FailState = _GetFailState(pTrie->pTmpPool, State);
         ret = _InheritFailPid(pTrie, State, FailState);
         if (ERROR_SUCCESS != ret)
         {
@@ -259,7 +259,7 @@ Uint Ac_PreCompile(ac_trie_s *pTrie)
     Uint ret = ERROR_FAILED;
     Uint NodeNum;
 
-    NodeNum = Ac_MemPool_GetNodeNum(pTrie->TmpPool);
+    NodeNum = Ac_MemPool_GetNodeNum(pTrie->pTmpPool);
 
     if (NodeNum != pTrie->StateNum)
     {
