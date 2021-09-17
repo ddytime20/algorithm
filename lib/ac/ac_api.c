@@ -37,7 +37,7 @@ static Uint _Ac_GetTrieInfo(ac_trie_s *pTrie, ac_batch_iterate_s *pBatch,
     head->MsgType = AC_MSG_TREE;
 
     tree = (ac_msg_tree_s *)(head + 1);
-    tree->PidNum = pTrie->PidSum;
+    tree->PidNum = pTrie->PidNum;
     tree->StateNum = pTrie->StateNum;
 
     pBatch->Batch[0] = AC_MSG_STATE;
@@ -105,7 +105,7 @@ static Uint _Ac_GetTrieState(ac_trie_s *pTrie, ac_batch_iterate_s *pBatch,
 
     StateID = pBatch->Batch[1];
     PathIndex = pBatch->Batch[2];
-    State = Ac_MemPool_GetNode(pTrie->TmpPool, StateID);
+    State = Ac_MemPool_GetNode(pTrie->pTmpPool, StateID);
     TotalLen = sizeof(ac_msg_head_s);
 
     do
@@ -143,14 +143,14 @@ static Uint _Ac_FillFailStateInfo(ac_trie_s *pTrie, ac_tmp_state_s *pState,
     {
         return AC_MSG_FULL;
     }
-    if (AC_INVALID_FAIL_ID == pState->FailedID)
+    if (AC_INVALID_FAIL_ID == pState->FailStateID)
     {
         return AC_MSG_CONTINUE;
     }
     NewStateID = pTrie->pNewState[pState->StateID];
     MsgFailState = (ac_msg_failstate_s *)pBuff;
     MsgFailState->StateID = NewStateID;
-    NewStateID = pTrie->pNewState[pState->FailedID];
+    NewStateID = pTrie->pNewState[pState->FailStateID];
     MsgFailState->FailStateID = NewStateID;
     
     *pDataLen = sizeof(ac_msg_failstate_s);
@@ -181,7 +181,7 @@ static Uint _Ac_FillPidInfo(ac_trie_s *pTrie, ac_tmp_state_s *pState,
         
         Pid = &pState->PidList[Loop];
         MsgPid->StateID = NewStateID;
-        MsgPid->PidID = Pid->Pid;
+        MsgPid->PidID = Pid->PidID;
         MsgPid->PattLen = Pid->PattLen;
 
         MsgPid++;
@@ -216,7 +216,7 @@ static Uint _Ac_GetTriePid(ac_trie_s *pTrie, ac_batch_iterate_s *pBatch,
 
     StateID = pBatch->Batch[1];
     Index = pBatch->Batch[2];
-    State = Ac_MemPool_GetNode(pTrie->TmpPool, StateID);
+    State = Ac_MemPool_GetNode(pTrie->pTmpPool, StateID);
     TotalLen = sizeof(ac_msg_head_s);
 
     do
@@ -262,7 +262,7 @@ static Uint _Ac_GetTrieFailState(ac_trie_s *pTrie, ac_batch_iterate_s *pBatch,
     Head->MsgType = AC_MSG_FAILSTATE;
 
     StateID = pBatch->Batch[1];
-    TmpState = Ac_MemPool_GetNode(pTrie->TmpPool, StateID);
+    TmpState = Ac_MemPool_GetNode(pTrie->pTmpPool, StateID);
     TotalLen = sizeof(ac_msg_head_s);
     
     do
@@ -352,7 +352,7 @@ static Uint _Ac_MallocTrieResource(ac_trie_s *pTrie, Uint uiPidNum, Uint uiState
     }
     pTrie->pPid = PidInfo;
     pTrie->StateNum = uiStateNum;
-    pTrie->PidSum = uiPidNum;
+    pTrie->PidNum = uiPidNum;
 
     return ERROR_SUCCESS;
 }
@@ -423,7 +423,7 @@ static Uint _Ac_SetFailStateInfo(ac_trie_s *pTrie, Byte *pBuff, Uint uiBuffLen)
     for (Loop = 0; Loop < Num; Loop++)
     {
         StateInfo = &pTrie->pStateInfo[MsgFail->StateID];
-        StateInfo->FailState = MsgFail->FailStateID;
+        StateInfo->FailStateID = MsgFail->FailStateID;
         MsgFail++;
     }
 
@@ -449,13 +449,13 @@ static Uint _Ac_SetPidInfo(ac_trie_s *pTrie, Byte *pBuff, Uint BuffLen)
         StateID = MsgPid->StateID;
 
         Pid = &pTrie->pPid[pTrie->NextIndex];
-        Pid->Pid = MsgPid->PidID;
+        Pid->PidID = MsgPid->PidID;
         Pid->PattLen = MsgPid->PattLen;
 
         StateInfo = &pTrie->pStateInfo[StateID];
-        if (NULL == StateInfo->PidList)
+        if (NULL == StateInfo->pPidList)
         {
-            StateInfo->PidList = (void *)Pid;
+            StateInfo->pPidList = (void *)Pid;
             StateInfo->PidNum = 1;
         }
         else
@@ -564,7 +564,7 @@ Uint Ac_AddPattern(ACHANDLE AcHandle, Byte *Pattern,
     memset(&stPid, 0, sizeof(stPid));
 
     stPid.PattLen = PattLen;
-    stPid.Pid = Pid;
+    stPid.PidID = Pid;
 
     return Ac_AddOnePatternToTrie(Trie, Pattern, &stPid);
 }
