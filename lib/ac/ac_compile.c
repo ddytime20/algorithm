@@ -5,6 +5,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include "basetype.h"
 #include "dlist.h"
 #include "debug.h"
@@ -195,7 +196,7 @@ static Uint _InheritFailPid(ac_trie_s *pTrie, ac_tmp_state_s *pState, ac_tmp_sta
         ret = Ac_AddPid(pTrie, Pid, pState);
         if (ERROR_SUCCESS != ret)
         {
-            printf("ac_compile, add one pid faile \n");
+            AC_PRINTF("ac_compile, add one pid faile \n");
             break;
         }
     }
@@ -206,7 +207,7 @@ static Uint _InheritFailPid(ac_trie_s *pTrie, ac_tmp_state_s *pState, ac_tmp_sta
 
 static Uint _InheritPid(ac_trie_s *pTrie)
 {
-    Uint ret;
+    Uint ret = ERROR_SUCCESS;
     ac_tmp_state_s *State;
     ac_tmp_state_s *FailState;
     
@@ -216,7 +217,7 @@ static Uint _InheritPid(ac_trie_s *pTrie)
         ret = _InheritFailPid(pTrie, State, FailState);
         if (ERROR_SUCCESS != ret)
         {
-            printf("ac_compile, Inherit fail pid fail\n");
+            AC_PRINTF("ac_compile, Inherit fail pid fail\n");
             break;
         }
     }
@@ -224,27 +225,60 @@ static Uint _InheritPid(ac_trie_s *pTrie)
     return ret;
 }
 
+static Uint _ReAssignStateID(ac_trie_s *pTrie)
+{
+    ac_tmp_state_s *State;
+    Uint NewState;
+    Uint NewStateBase;
+    Uint *pNewState;
+
+    pNewState = AC_MALLOC(sizeof(Uint) * pTrie->StateNum);
+    if (NULL == pNewState)
+    {
+        return ERROR_MEM;
+    }
+    memset(pNewState, 0, (sizeof(Uint) * pTrie->StateNum));
+    pTrie->pNewState = pNewState;
+    NewStateBase = 0;
+
+    DLIST_FOREACH_ENTRY(&pTrie->StateList, State, Node)
+    {
+        NewState = NewStateBase;
+        NewStateBase++;
+        pNewState[State->StateID] = NewState;
+    }
+    
+    return ERROR_SUCCESS;
+}
+
 /*
  * Create fail jump table and inherit pid
  */
 Uint Ac_PreCompile(ac_trie_s *pTrie)
 {
-    Uint ret;
+    Uint ret = ERROR_FAILED;
     Uint NodeNum;
 
     NodeNum = Ac_MemPool_GetNodeNum(pTrie->TmpPool);
 
     if (NodeNum != pTrie->StateNum)
     {
-        printf("ac_compile state number error \n");
-        return ERROR_FAILED;
+        AC_PRINTF("ac_compile state number error \n");
+        return ret;
     }
-    printf("ac_compile state number %d\n", NodeNum);
+    AC_PRINTF("ac_compile state number %d\n", NodeNum);
     _MakeLayer(pTrie);
 
     _MakeFailureState(pTrie);
     
-    ret = _InheritPid(pTrie);
+    if (ERROR_SUCCESS == _InheritPid(pTrie))
+    {
+        ret = _ReAssignStateID(pTrie);
+    }
+    else
+    {
+        AC_PRINTF("ac_compile, inherit pid fail \n");
+    }
 
     return ret;
 }
