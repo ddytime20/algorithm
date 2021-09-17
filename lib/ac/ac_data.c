@@ -12,6 +12,23 @@
 #include "ac_mem.h"
 #include "ac_data.h"
 
+void _FreeTmpStateNode(ac_tmp_state_s *pTmpState)
+{
+    if (NULL != pTmpState->PathList)
+    {
+        AC_FREE(pTmpState->PathList);
+        pTmpState->PathList = NULL;
+        pTmpState->PathNum = 0;
+    }
+
+    if (NULL != pTmpState->PidList)
+    {
+        AC_FREE(pTmpState->PidList);
+        pTmpState->PidList = NULL;
+        pTmpState->PidNum = 0;
+    }
+}
+
 /*
  * Free temporary state node
  */
@@ -41,10 +58,10 @@ Uint _AllocTmpState(ac_trie_s *pstTrie)
     if (ERROR_SUCCESS == Ac_MemPool_Init(TmpPool, sizeof(ac_tmp_state_s)))
     {
         // get trie root node
-        State = Ac_MemPoll_Malloc_Node(TmpPool, &uiNodeId);
+        State = Ac_MemPool_Malloc_Node(TmpPool, &uiNodeId);
         if (NULL == State)
         {
-            printf("ac_data ac alloc root node failed\n");
+            AC_PRINTF("ac_data ac alloc root node failed\n");
             _FreeTmpState(pstTrie);
             return ERROR_FAILED;
         }
@@ -52,7 +69,7 @@ Uint _AllocTmpState(ac_trie_s *pstTrie)
         State->StateID = 0;
         pstTrie->StateNum++;
     } else {
-        printf("ac_data ac memory pool initializa failed \n");
+        AC_PRINTF("ac_data ac memory pool initializa failed \n");
     }
 
     DBGASSERT(0 == uiNodeId);
@@ -110,7 +127,7 @@ ac_tmp_state_s *_AddNewState(ac_trie_s *pTrie, ac_tmp_state_s *FatherState, Byte
     if (NULL == NextState)
     {
         // not find child state , add new state to father state
-        NextState = Ac_MemPoll_Malloc_Node(MemPool, &NodeID);
+        NextState = Ac_MemPool_Malloc_Node(MemPool, &NodeID);
         if (NULL == NextState)
         {
             return NULL;
@@ -186,13 +203,13 @@ Uint Ac_AddOnePatternToTrie(ac_trie_s *pTrie, Byte *Pattern, ac_pid_s *pPid)
     Uint uiLoop;
     ac_tmp_state_s *State;
 
-    printf("ac_data ac add one pattern %s\n", Pattern);
+    //AC_PRINTF("ac_data ac add one pattern %s\n", Pattern);
     // first time, initialize temporary state
     if (NULL == pTrie->TmpPool)
     {
         if (ERROR_SUCCESS != _AllocTmpState(pTrie))
         {
-            printf("ac_data ac alloc temporary state failed\n");
+            AC_PRINTF("ac_data ac alloc temporary state failed\n");
             return ERROR_FAILED;
         }
     }
@@ -219,4 +236,29 @@ Uint Ac_AddOnePatternToTrie(ac_trie_s *pTrie, Byte *Pattern, ac_pid_s *pPid)
     }
 
     return ERROR_SUCCESS;
+}
+
+void AC_FreeTmpState(ac_trie_s *pTrie)
+{
+    Uint Loop;
+    Uint Max;
+    ac_tmp_state_s *TmpState;
+
+    if (NULL == pTrie->TmpPool)
+    {
+        return;
+    }
+
+    Max = Ac_MemPool_GetNodeNum(pTrie->TmpPool);
+    for (Loop = 0; Loop < Max; Loop++)
+    {
+        TmpState = Ac_MemPool_GetNode(pTrie->TmpPool, Loop);
+        _FreeTmpStateNode(TmpState);
+    }
+
+    Ac_MemPool_Fini(pTrie->TmpPool);
+    AC_FREE(pTrie->TmpPool);
+    pTrie->TmpPool = NULL;
+    
+    return;
 }
