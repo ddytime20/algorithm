@@ -25,11 +25,13 @@ typedef struct ac_mem_pool
 #define AC_FREE(pdata)   free(pdata)
 
 
-extern void *Ac_MemPoll_Malloc_Node(ac_mem_pool_s *pstMemPool, Uint *pNid);
+extern void *Ac_MemPool_Malloc_Node(ac_mem_pool_s *pstMemPool, Uint *pNid);
 extern void *Ac_MemPool_GetNode(ac_mem_pool_s *pstMemPool, Uint Nid);
 extern Uint Ac_MemPool_GetNodeNum(ac_mem_pool_s *pstMemPool);
 extern Uint Ac_MemPool_Init(ac_mem_pool_s *pstMemPool, Uint size);
 extern void Ac_MemPool_Fini(ac_mem_pool_s *pstMemPool);
+extern Uint Ac_MemPool_GetNodeNum(ac_mem_pool_s *pstMemPool);
+
 
 
 EXTERN_C_END
