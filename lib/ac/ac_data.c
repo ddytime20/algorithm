@@ -34,7 +34,7 @@ void _FreeTmpStateNode(ac_tmp_state_s *pTmpState)
  */
 void _FreeTmpState(ac_trie_s *pstTrie)
 {
-    if (NULL == pstTrie->TmpPool)
+    if (NULL == pstTrie->pTmpPool)
     {
         return;
     }
@@ -53,7 +53,7 @@ Uint _AllocTmpState(ac_trie_s *pstTrie)
     {
         return ERROR_MEM;
     }
-    pstTrie->TmpPool = TmpPool;
+    pstTrie->pTmpPool = TmpPool;
 
     if (ERROR_SUCCESS == Ac_MemPool_Init(TmpPool, sizeof(ac_tmp_state_s)))
     {
@@ -121,7 +121,7 @@ ac_tmp_state_s *_AddNewState(ac_trie_s *pTrie, ac_tmp_state_s *FatherState, Byte
 {
     Uint NodeID;
     ac_tmp_state_s *NextState;
-    ac_mem_pool_s *MemPool = pTrie->TmpPool;
+    ac_mem_pool_s *MemPool = pTrie->pTmpPool;
 
     NextState = Ac_GetChildState(MemPool, FatherState, Ascii);
     if (NULL == NextState)
@@ -191,7 +191,7 @@ Uint Ac_AddPid(ac_trie_s *pTrie, ac_pid_s *pPid, ac_tmp_state_s *pState)
         pState->PidList = PidList;
         memcpy(pState->PidList + pState->PidNum, pPid, sizeof(ac_pid_s));
         pState->PidNum++;
-        pTrie->PidSum++;
+        pTrie->PidNum++;
     }
 
     return ERROR_SUCCESS;
@@ -205,7 +205,7 @@ Uint Ac_AddOnePatternToTrie(ac_trie_s *pTrie, Byte *Pattern, ac_pid_s *pPid)
 
     //AC_PRINTF("ac_data ac add one pattern %s\n", Pattern);
     // first time, initialize temporary state
-    if (NULL == pTrie->TmpPool)
+    if (NULL == pTrie->pTmpPool)
     {
         if (ERROR_SUCCESS != _AllocTmpState(pTrie))
         {
@@ -214,7 +214,7 @@ Uint Ac_AddOnePatternToTrie(ac_trie_s *pTrie, Byte *Pattern, ac_pid_s *pPid)
         }
     }
 
-    State = AC_GETROOTSTATE(pTrie->TmpPool);
+    State = AC_GETROOTSTATE(pTrie->pTmpPool);
     for (uiLoop = 0; uiLoop < pPid->PattLen; uiLoop++)
     {
         Ascii = Pattern[uiLoop];
@@ -244,21 +244,21 @@ void AC_FreeTmpState(ac_trie_s *pTrie)
     Uint Max;
     ac_tmp_state_s *TmpState;
 
-    if (NULL == pTrie->TmpPool)
+    if (NULL == pTrie->pTmpPool)
     {
         return;
     }
 
-    Max = Ac_MemPool_GetNodeNum(pTrie->TmpPool);
+    Max = Ac_MemPool_GetNodeNum(pTrie->pTmpPool);
     for (Loop = 0; Loop < Max; Loop++)
     {
-        TmpState = Ac_MemPool_GetNode(pTrie->TmpPool, Loop);
+        TmpState = Ac_MemPool_GetNode(pTrie->pTmpPool, Loop);
         _FreeTmpStateNode(TmpState);
     }
 
-    Ac_MemPool_Fini(pTrie->TmpPool);
-    AC_FREE(pTrie->TmpPool);
-    pTrie->TmpPool = NULL;
+    Ac_MemPool_Fini(pTrie->pTmpPool);
+    AC_FREE(pTrie->pTmpPool);
+    pTrie->pTmpPool = NULL;
     
     return;
 }
