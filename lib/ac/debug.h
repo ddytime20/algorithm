@@ -9,7 +9,7 @@
 
 #define PRINTF_ATTR(fmt, args) __attribute__((format(printf, fmt, args)))
 
-extern void debug_printf(char *format, ...) PRINTF_ATTR(1, 2);
+extern void AC_PRINTF(char *format, ...) PRINTF_ATTR(1, 2);
 
 
 #endif
