@@ -7,7 +7,24 @@
 
 EXTERN_C_BEGIN
 
-#define INVALID_HANDLE 0
+#define INVALID_HANDLE      0
+#define AC_HIT_NUM          32
+#define AC_REPEAT_HIT_COUNT 8
+
+typedef struct ac_hit_pid
+{
+    Uint PidID;
+    Uint HitCount;
+    Byte *pHitStart[AC_REPEAT_HIT_COUNT];
+    Byte *pHitEnd[AC_REPEAT_HIT_COUNT];
+}ac_hit_pid_s;
+
+typedef struct ac_full_result
+{
+    Uint PidNum;
+    Uint RecordCount;
+    ac_hit_pid_s HitPid[AC_HIT_NUM]; 
+}ac_full_result_s;
 
 extern ACHANDLE Ac_CreateHandle(void);
 
