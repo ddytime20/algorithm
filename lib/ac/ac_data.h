@@ -13,16 +13,29 @@ EXTERN_C_BEGIN
 #define AC_GETROOTSTATE(pstMemPool)    Ac_MemPool_GetNode(pstMemPool, 0)
 
 #define AC_STATE_65535                 65535UL
-#define AC_STATE_255                   255UL
-#define AC_STATE_128
+#define AC_STATE_32767                 32767UL
+#define AC_STATE_127                   127UL
 
 #define AC_BUFF_MAX                    8192UL
 
 #define AC_ASCII_NUM                   256UL
 
+#define AC_GET_ID8(StateID)           ((StateID) & 0x7F)   
+#define AC_SET_FLAG8(StateID)         ((StateID) | 0x80)
+#define AC_GET_FLAG8(StateID)         ((StateID) & 0x80)
+
+#define AC_GET_ID16(StateID)          ((StateID) & 0x7FFF)
+#define AC_SET_FLAG16(StateID)        ((StateID) | 0x8000)
+#define AC_GET_FLAG16(StateID)        ((StateID) & 0x8000)
+
+#define AC_GET_ID(StateID)            ((StateID) & 0x7FFFFFFF)
+#define AC_SET_FLAG(StateID)          ((StateID) | 0x80000000)
+#define AC_GET_FLAG(StateID)          ((StateID) | 0x80000000)
+
 typedef Uint   AC_STATE_ROW32[AC_ASCII_NUM];
 typedef Uint16 AC_STATE_ROW16[AC_ASCII_NUM];
 typedef Byte   AC_STATE_ROW8[AC_ASCII_NUM]; 
+
 
 /*
  * Pattern id info
@@ -30,7 +43,7 @@ typedef Byte   AC_STATE_ROW8[AC_ASCII_NUM];
 typedef struct ac_pid
 {
     Uint16 PattLen;
-    Uint Pid;
+    Uint PidID;
 }ac_pid_s;
 
 /*
@@ -49,7 +62,7 @@ typedef struct ac_tmp_state
 {
     dlist_node_s Node;
     Uint StateID;
-    Uint FailedID;
+    Uint FailStateID;
     Uint PidNum;
     Byte PathNum;
     ac_tmp_path_s *PathList;
@@ -58,8 +71,8 @@ typedef struct ac_tmp_state
 
 typedef struct ac_state_info
 {
-    void *PidList;
-    Uint FailState;
+    void *pPidList;
+    Uint FailStateID;
     Uint PidNum;
 }ac_state_info_s;
 
@@ -68,18 +81,19 @@ typedef struct ac_state_info
  */
 typedef struct ac_trie
 {
-    Uint PidSum;
+    Uint PidNum;
     Uint StateNum;
     Uint NextIndex;
     Byte bCompile;
 
+    Uint FullStateNum;
     void *pFullStateTable;
     ac_state_info_s *pStateInfo;
     ac_pid_s *pPid;
 
     Uint *pNewState;
     dlist_head_s StateList;
-    ac_mem_pool_s *TmpPool;
+    ac_mem_pool_s *pTmpPool;
 }ac_trie_s;
 
 typedef enum ac_msg_type
