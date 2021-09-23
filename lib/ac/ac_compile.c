@@ -228,7 +228,7 @@ static Uint _InheritPid(ac_trie_s *pTrie)
 static Uint _ReAssignStateID(ac_trie_s *pTrie)
 {
     ac_tmp_state_s *State;
-    Uint NewState;
+    Uint NewStateID;
     Uint NewStateBase;
     Uint *pNewState;
 
@@ -243,9 +243,14 @@ static Uint _ReAssignStateID(ac_trie_s *pTrie)
 
     DLIST_FOREACH_ENTRY(&pTrie->StateList, State, Node)
     {
-        NewState = NewStateBase;
+        NewStateID = NewStateBase;
         NewStateBase++;
-        pNewState[State->StateID] = NewState;
+        // set pid flag
+        if (State->PidNum)
+        {
+            NewStateID = AC_SET_FLAG(NewStateID);
+        }
+        pNewState[State->StateID] = NewStateID;
     }
     
     return ERROR_SUCCESS;
