@@ -12,6 +12,7 @@
 #include "ac_mem.h"
 #include "ac_data.h"
 #include "ac_compile.h"
+#include "ac.h"
 
 #define AC_MSG_CONTINUE   0UL
 #define AC_MSG_FULL       1UL
@@ -58,6 +59,7 @@ static Uint _Ac_FillStateInfo(ac_trie_s *pTrie, ac_tmp_state_s *pState,
 
     MsgState = (ac_msg_state_s *)pBuff;
     NewState = pTrie->pNewState[pState->StateID];
+    NewState = AC_GET_ID(NewState);  // delete falg
 
     for (Loop = *pPathIndex; Loop < pState->PathNum; Loop++)
     {
@@ -148,9 +150,11 @@ static Uint _Ac_FillFailStateInfo(ac_trie_s *pTrie, ac_tmp_state_s *pState,
         return AC_MSG_CONTINUE;
     }
     NewStateID = pTrie->pNewState[pState->StateID];
+    NewStateID = AC_GET_ID(NewStateID);
     MsgFailState = (ac_msg_failstate_s *)pBuff;
     MsgFailState->StateID = NewStateID;
     NewStateID = pTrie->pNewState[pState->FailStateID];
+    NewStateID = AC_GET_ID(NewStateID); // fail id do not need flag
     MsgFailState->FailStateID = NewStateID;
     
     *pDataLen = sizeof(ac_msg_failstate_s);
@@ -170,6 +174,7 @@ static Uint _Ac_FillPidInfo(ac_trie_s *pTrie, ac_tmp_state_s *pState,
 
     MsgPid = (ac_msg_pid_s *)pBuff;
     NewStateID = pTrie->pNewState[pState->StateID];
+    NewStateID = AC_GET_ID(NewStateID); // delete flag
 
     for (Loop = *pIndex; Loop < pState->PidNum; Loop++)
     {
@@ -317,7 +322,11 @@ static Uint _Ac_MallocTrieResource(ac_trie_s *pTrie, Uint uiPidNum, Uint uiState
     {
         return ERROR_FAILED; 
     }
-    else if (AC_STATE_255 < uiStateNum)
+    else if (AC_STATE_32767 < uiStateNum)
+    {
+        return ERROR_FAILED;
+    }
+    else if (AC_STATE_127 < uiStateNum)
     {
         Len = sizeof(AC_STATE_ROW16) * uiStateNum;
     }
@@ -375,9 +384,13 @@ static Uint _Ac_SetStateInfo(ac_trie_s *pTrie, Byte *pBuff, Uint BuffLen)
 {
     Uint Loop;
     Uint Num;
+    Uint ChildID;
+    //Uint StateID;
     ac_msg_state_s *State;
     Uint16 *SubState16;
+    Uint16 ChildID16;
     Byte *SubState8;
+    Byte ChildID8;
     AC_STATE_ROW16 *StateTable16;
     AC_STATE_ROW8 *StateTable8;
 
@@ -386,21 +399,40 @@ static Uint _Ac_SetStateInfo(ac_trie_s *pTrie, Byte *pBuff, Uint BuffLen)
 
     for (Loop = 0; Loop < Num; Loop++)
     {
+        //StateID = State->StateID;
+        ChildID = State->SubStateID;
+
         if (pTrie->StateNum > AC_STATE_65535)
         {
             break;
         }
-        else if (pTrie->StateNum > AC_STATE_255)
+        else if (pTrie->StateNum > AC_STATE_32767)
+        {
+            break;
+        }
+        else if (pTrie->StateNum > AC_STATE_127)
         {
             StateTable16 = (AC_STATE_ROW16 *)pTrie->pFullStateTable;
+            ChildID16 = (Uint16)AC_GET_ID(ChildID);
+            if (AC_GET_FLAG(ChildID))
+            {
+                ChildID16 = AC_GET_FLAG(ChildID16);
+            }
+
             SubState16 = StateTable16[State->StateID];
-            SubState16[State->Ascii] = State->SubStateID;
+            SubState16[State->Ascii] = ChildID16;
         }
         else
         {
             StateTable8 = (AC_STATE_ROW8 *)pTrie->pFullStateTable;
+            ChildID8 = (Byte)AC_GET_ID(ChildID);
+            if (AC_GET_FLAG(ChildID))
+            {
+                ChildID8 = AC_SET_FLAG8(ChildID8);
+            }
+
             SubState8 = StateTable8[State->StateID];
-            SubState8[State->Ascii] = State->SubStateID;
+            SubState8[State->Ascii] = ChildID8;
         }
         State++;
     }
@@ -408,6 +440,58 @@ static Uint _Ac_SetStateInfo(ac_trie_s *pTrie, Byte *pBuff, Uint BuffLen)
     return ERROR_SUCCESS;
 }
 
+
+static void _Ac_InheritFailState(ac_trie_s *pTrie, Uint StateID, Uint ChildID)
+{
+    AC_STATE_ROW8 *FullTable8;
+    AC_STATE_ROW16 *FullTable16;
+    //AC_STATE_ROW *FullTable;
+    //Uint *StateTable;
+    //Uint *ChilidTable;
+    Uint16 *StateTable16;
+    Uint16 *ChildTable16;
+    Byte *StateTable8;
+    Byte *ChildTable8;
+    Uint Ascii;
+
+    if (NULL == pTrie->pFullStateTable)
+    {
+        return;
+    }
+
+    for (Ascii = 0; Ascii < 256; Ascii++)
+    {
+        if (pTrie->StateNum > AC_STATE_65535)
+        {
+            continue;
+        }
+        else if (pTrie->StateNum > AC_STATE_32767)
+        {
+            continue;
+        }
+        else if (pTrie->StateNum > AC_STATE_127)
+        {
+            FullTable16 = (AC_STATE_ROW16 *)pTrie->pFullStateTable;
+            StateTable16 = FullTable16[StateID];
+            ChildTable16 = FullTable16[ChildID];
+            if ((0 == StateTable16[Ascii]) && (0 != ChildTable16[Ascii]))
+            {
+                StateTable16[Ascii] = ChildTable16[Ascii];
+            }
+        }
+        else
+        {
+            FullTable8 = (AC_STATE_ROW8 *)pTrie->pFullStateTable;
+            StateTable8 = FullTable8[StateID];
+            ChildTable8 = FullTable8[ChildID];
+            if ((0 == StateTable8[Ascii]) && (0 != ChildTable8[Ascii]))
+            {
+                StateTable8[Ascii] = ChildTable8[Ascii];
+            }
+        }
+    }
+
+}
 
 static Uint _Ac_SetFailStateInfo(ac_trie_s *pTrie, Byte *pBuff, Uint uiBuffLen)
 {
@@ -424,6 +508,7 @@ static Uint _Ac_SetFailStateInfo(ac_trie_s *pTrie, Byte *pBuff, Uint uiBuffLen)
     {
         StateInfo = &pTrie->pStateInfo[MsgFail->StateID];
         StateInfo->FailStateID = MsgFail->FailStateID;
+        _Ac_InheritFailState(pTrie, MsgFail->StateID, MsgFail->FailStateID);
         MsgFail++;
     }
 
@@ -621,4 +706,202 @@ Uint Ac_Compile(ACHANDLE Handle)
     AC_FREE(pBuff);
 
     return ERROR_SUCCESS;
+}
+
+static void _Ac_RecordOnePid(ac_pid_s *pPid, Byte *pStart,
+        Byte *pCursor, ac_full_result_s *pResult)
+{
+    Uint PidNum;
+    Uint PidID;
+    Uint Index;
+    ac_hit_pid_s *HitPid;
+
+    PidNum = pResult->PidNum;
+    PidID = pPid->PidID;
+    if (0 == PidNum)
+    {
+        HitPid = &pResult->HitPid[0];
+        HitPid->PidID = pPid->PidID;
+        HitPid->HitCount = 1;
+        HitPid->pHitStart[0] = pStart;
+        HitPid->pHitEnd[0] = pCursor;
+        pResult->PidNum = 1;
+        pResult->RecordCount = 1;
+    }
+    else
+    {
+        for (Index = 0; Index < PidNum; Index++)
+        {
+            HitPid = &pResult->HitPid[Index];
+            if (PidID == HitPid->PidID)
+            {
+                if (AC_REPEAT_HIT_COUNT > HitPid->HitCount)
+                {
+                    HitPid->pHitStart[HitPid->HitCount] = pStart;
+                    HitPid->pHitEnd[HitPid->HitCount] = pCursor;
+                    HitPid->HitCount++;
+                    pResult->RecordCount++;
+                }
+
+                break;
+            }
+        }
+
+        if (Index == PidNum && PidNum != AC_HIT_NUM)
+        {
+            HitPid = &pResult->HitPid[PidNum];
+            HitPid->PidID = PidID;
+            HitPid->HitCount = 1;
+            HitPid->pHitStart[0] = pStart;
+            HitPid->pHitEnd[0] = pCursor;
+            pResult->PidNum++;
+            pResult->RecordCount++;
+        }
+    }
+
+    return;
+}
+
+
+static void _Ac_RecordHit(ac_state_info_s *pStateInfo, Byte *pStart,
+        Byte *pCursor, ac_full_result_s *pResult)
+{
+    Uint16 PattLen;
+    Byte *HitStart;
+    ac_pid_s *Pid;
+    ac_pid_s *PidEnd;
+
+    if (NULL == pStateInfo->pPidList)
+    {
+        return;
+    }
+
+    Pid = (ac_pid_s *)pStateInfo->pPidList;
+    PidEnd = Pid + pStateInfo->PidNum;
+    PattLen = (Uint16)(pCursor - pStart);
+    for (;Pid < PidEnd;Pid++)
+    {
+        if (PattLen > Pid->PattLen)
+        {
+            HitStart = pCursor - Pid->PattLen;
+        }
+        else
+        {
+            HitStart = pStart;
+        }
+
+        _Ac_RecordOnePid(Pid, HitStart, pCursor, pResult);
+    }
+
+    return;
+}
+static void _Ac_FullSearch8(ac_trie_s *pTrie, Byte *pStart, 
+        Uint uiLen, ac_full_result_s *pResult)
+{
+    //Uint FullStateMax;
+    Byte *Cursor;
+    Byte *End;
+    Byte StateID;
+    Byte BaseID;
+    Byte Ascii;
+    AC_STATE_ROW8 *StateRow;
+
+    StateRow = (AC_STATE_ROW8 *)pTrie->pFullStateTable;
+    if (NULL == StateRow)
+    {
+        return;
+    }
+
+    //FullStateMax = pTrie->FullStateNum;
+    Cursor = pStart;
+    End = pStart + uiLen;
+    StateID = 0;
+
+    do
+    {
+        Ascii = *Cursor;
+        StateID = StateRow[StateID][Ascii];
+        if (AC_GET_FLAG8(StateID))
+        {
+            BaseID = AC_GET_ID8(StateID);
+            _Ac_RecordHit(&pTrie->pStateInfo[BaseID],pStart,Cursor,pResult);
+            StateID = BaseID;
+        }
+
+        Cursor++;
+    }while(Cursor != End);
+
+    return;
+}
+
+static void _Ac_FullSearch16(ac_trie_s *pTrie, Byte *pStart,
+        Uint uiLen, ac_full_result_s *pResult)
+{
+    //Uint FullStateMax;
+    Uint16 StateID;
+    Uint16 BaseID;
+    Byte *Cursor;
+    Byte *End;
+    Byte Ascii;
+    AC_STATE_ROW16 *StateRow;
+
+    StateRow = (AC_STATE_ROW16 *)pTrie->pFullStateTable;
+    if (NULL == StateRow)
+    {
+        return;
+    }
+    //FullStateMax = pTrie->FullStateNum;
+    Cursor = pStart;
+    End = pStart + uiLen;
+    StateID = 0;
+    do
+    {
+        Ascii = *Cursor;
+        StateID = StateRow[StateID][Ascii];
+        if (AC_GET_FLAG16(StateID))
+        {
+            BaseID = AC_GET_ID16(StateID);
+            _Ac_RecordHit(&pTrie->pStateInfo[BaseID],pStart, Cursor, pResult);
+            StateID = BaseID;
+        }
+
+        Cursor++;
+    }while(Cursor != End);
+
+    return;
+}
+
+void Ac_FullSearch(ACHANDLE Handle, Byte *pStart, Uint uiLen, 
+        ac_full_result_s *pResult)
+{
+    ac_trie_s *Trie;
+    
+    Trie = (ac_trie_s *)Handle;
+
+    if (0 == uiLen)
+    {
+        return;
+    }
+
+    if (Trie->StateNum > AC_STATE_65535)
+    {
+        AC_PRINTF("trie state number %d\n", Trie->StateNum);
+        // _Ac_FullSearch32();
+        return;
+    }
+    else if (Trie->StateNum > AC_STATE_32767)
+    {
+        AC_PRINTF("trie state number %d\n", Trie->StateNum);
+        return;
+    }
+    else if (Trie->StateNum > AC_STATE_127)
+    {
+        _Ac_FullSearch16(Trie, pStart, uiLen, pResult);
+    }
+    else
+    {
+        _Ac_FullSearch8(Trie, pStart, uiLen, pResult);
+    }
+
+    return;
 }
