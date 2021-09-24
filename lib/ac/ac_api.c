@@ -564,7 +564,7 @@ static Uint _Ac_GetNextBatchInfo(ac_trie_s *pTrie, ac_batch_iterate_s *pBatch,
         case AC_MSG_TREE:
             {
                 ret = _Ac_GetTrieInfo(pTrie, pBatch, pBuff, BuffLen);
-                AC_PRINTF("ac_api.c, get AC_MSG_TREE ret %d\n", ret);
+                //AC_PRINTF("ac_api.c, get AC_MSG_TREE ret %d\n", ret);
                 break;
             }
         case AC_MSG_STATE:
@@ -694,11 +694,13 @@ Uint Ac_Compile(ACHANDLE Handle)
         return ERROR_MEM;
     }
 
-    for ( _Ac_InitBatchIterate(&Batch); ret > 0;
+    _Ac_InitBatchIterate(&Batch);
+    for ( ret = _Ac_GetNextBatchInfo(pTrie, &Batch, pBuff, AC_BUFF_MAX); ret > 0;
             ret = _Ac_GetNextBatchInfo(pTrie, &Batch, pBuff, AC_BUFF_MAX))
     {
         if (ERROR_SUCCESS != _Ac_BatchProc(pTrie, pBuff, ret))
         {
+            AC_PRINTF("ac compile failed \n");
             break;
         }
     }
