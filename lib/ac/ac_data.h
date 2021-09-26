@@ -30,7 +30,7 @@ EXTERN_C_BEGIN
 
 #define AC_GET_ID(StateID)            ((StateID) & 0x7FFFFFFF)
 #define AC_SET_FLAG(StateID)          ((StateID) | 0x80000000)
-#define AC_GET_FLAG(StateID)          ((StateID) | 0x80000000)
+#define AC_GET_FLAG(StateID)          ((StateID) & 0x80000000)
 
 typedef Uint   AC_STATE_ROW32[AC_ASCII_NUM];
 typedef Uint16 AC_STATE_ROW16[AC_ASCII_NUM];
