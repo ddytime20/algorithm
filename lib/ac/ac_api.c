@@ -296,7 +296,7 @@ static Uint _Ac_GetTrieFailState(ac_trie_s *pTrie, ac_batch_iterate_s *pBatch,
 
 static Uint _Ac_TrieEnd(ac_trie_s *pTrie)
 {
-    AC_FreeTmpState(pTrie);
+    Ac_FreeTmpState(pTrie);
 
     if (NULL != pTrie->pNewState)
     {
@@ -669,7 +669,7 @@ ACHANDLE Ac_CreateHandle(void)
  */
 Uint Ac_Compile(ACHANDLE Handle)
 {
-    Uint ret = 1;
+    Uint ret;
     ac_batch_iterate_s Batch;
     ac_trie_s *pTrie;
     Byte *pBuff;
@@ -899,6 +899,17 @@ void Ac_FullSearch(ACHANDLE Handle, Byte *pStart, Uint uiLen,
     {
         _Ac_FullSearch8(Trie, pStart, uiLen, pResult);
     }
+
+    return;
+}
+
+void Ac_DestroyTrie(ACHANDLE Handle)
+{
+    ac_trie_s *pTrie;
+
+    pTrie = (ac_trie_s *)Handle;
+
+    Ac_FreeResource(pTrie);
 
     return;
 }
