@@ -173,7 +173,7 @@ Uint Ac_AddPid(ac_trie_s *pTrie, ac_pid_s *pPid, ac_tmp_state_s *pState)
     {
         for (uiLoop = 0; uiLoop < pState->PidNum; uiLoop++)
         {
-            if (0 == memcpy(pPid, &pState->PidList[uiLoop], sizeof(ac_pid_s)))
+            if (0 == memcmp(pPid, &pState->PidList[uiLoop], sizeof(ac_pid_s)))
             {
                 bFound = True;
                 break;
