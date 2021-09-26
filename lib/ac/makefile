@@ -3,7 +3,7 @@ RM = rm -rf
 TARGET = ac_main
 C_SRC = $(wildcard *.c)
 C_OBJ = ${patsubst %.c, %.o, $(C_SRC)}
-C_FLAGS = -Wall -O -g 
+C_FLAGS = -Wall -O0 -g 
 LDFLAGS = -DDEBUG
 
 $(TARGET): $(C_OBJ)
@@ -14,5 +14,4 @@ $(TARGET): $(C_OBJ)
 
 clean:
 	$(RM) $(C_OBJ) $(TARGET)
-
 
