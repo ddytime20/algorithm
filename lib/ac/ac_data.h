@@ -157,7 +157,8 @@ typedef struct ac_batch_iterate
 extern ac_trie_s *Ac_CreateEmptyTrie(void);
 extern Uint Ac_AddOnePatternToTrie(ac_trie_s *pTrie, Byte *pattern, ac_pid_s *pid);
 extern Uint Ac_AddPid(ac_trie_s *pTrie, ac_pid_s *Pid, ac_tmp_state_s *State);
-extern void AC_FreeTmpState(ac_trie_s *pTrie);
+extern void Ac_FreeTmpState(ac_trie_s *pTrie);
+extern void Ac_FreeResource(ac_trie_s *pTrie);
 
 EXTERN_C_END
 
