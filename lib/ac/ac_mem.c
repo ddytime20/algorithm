@@ -50,7 +50,7 @@ void *Ac_MemPool_Malloc_Node(ac_mem_pool_s *pstMemPool, Uint *pNid)
     Uint uiOffset;
     Byte *pPool;
 
-    if (AC_POOL_MAX == pstMemPool->PoolNum)
+    if (AC_POOL_MAX == pstMemPool->NextIndex)
     {
         if (ERROR_SUCCESS != _EnlargeMemPool(pstMemPool))
         {
