@@ -43,7 +43,7 @@ static Uint _Ac_GetTrieInfo(ac_trie_s *pTrie, ac_batch_iterate_s *pBatch,
 
     pBatch->Batch[0] = AC_MSG_STATE;
 
-    return 1;
+    return (Uint)(sizeof(ac_msg_head_s) + sizeof(ac_msg_tree_s));
 }
 
 static Uint _Ac_FillStateInfo(ac_trie_s *pTrie, ac_tmp_state_s *pState,
@@ -351,6 +351,7 @@ static Uint _Ac_MallocTrieResource(ac_trie_s *pTrie, Uint uiPidNum, Uint uiState
         return ERROR_MEM;
     }
 
+    memset(StateInfo, 0, sizeof(ac_state_info_s) *uiStateNum);
     pTrie->pStateInfo = StateInfo;
 
     PidInfo = AC_MALLOC(sizeof(ac_pid_s) * uiPidNum);
@@ -361,6 +362,7 @@ static Uint _Ac_MallocTrieResource(ac_trie_s *pTrie, Uint uiPidNum, Uint uiState
     }
     pTrie->pPid = PidInfo;
     pTrie->StateNum = uiStateNum;
+    pTrie->FullStateNum = uiStateNum;
     pTrie->PidNum = uiPidNum;
 
     return ERROR_SUCCESS;
@@ -382,8 +384,6 @@ static Uint _Ac_SetTrieInfo(ac_trie_s *pTrie, Byte *pBuff, Uint BuffLen)
 
 static Uint _Ac_SetStateInfo(ac_trie_s *pTrie, Byte *pBuff, Uint BuffLen)
 {
-    Uint Loop;
-    Uint Num;
     Uint ChildID;
     //Uint StateID;
     ac_msg_state_s *State;
@@ -394,10 +394,9 @@ static Uint _Ac_SetStateInfo(ac_trie_s *pTrie, Byte *pBuff, Uint BuffLen)
     AC_STATE_ROW16 *StateTable16;
     AC_STATE_ROW8 *StateTable8;
 
-    Num = BuffLen / sizeof(ac_msg_state_s);
     State = (ac_msg_state_s *)pBuff;    
 
-    for (Loop = 0; Loop < Num; Loop++)
+    for (;State < (ac_msg_state_s *)(pBuff + BuffLen);)
     {
         //StateID = State->StateID;
         ChildID = State->SubStateID;
@@ -495,16 +494,13 @@ static void _Ac_InheritFailState(ac_trie_s *pTrie, Uint StateID, Uint ChildID)
 
 static Uint _Ac_SetFailStateInfo(ac_trie_s *pTrie, Byte *pBuff, Uint uiBuffLen)
 {
-    Uint Loop;
-    Uint Num;
     ac_msg_failstate_s *MsgFail;
     ac_state_info_s *StateInfo;
 
     DBGASSERT(0 == uiBuffLen%sizeof(ac_msg_failstate_s));
-    Num = uiBuffLen/sizeof(ac_msg_failstate_s);
     MsgFail = (ac_msg_failstate_s *)pBuff;
 
-    for (Loop = 0; Loop < Num; Loop++)
+    for (;MsgFail < (ac_msg_failstate_s *)(pBuff + uiBuffLen);)
     {
         StateInfo = &pTrie->pStateInfo[MsgFail->StateID];
         StateInfo->FailStateID = MsgFail->FailStateID;
@@ -518,18 +514,15 @@ static Uint _Ac_SetFailStateInfo(ac_trie_s *pTrie, Byte *pBuff, Uint uiBuffLen)
 
 static Uint _Ac_SetPidInfo(ac_trie_s *pTrie, Byte *pBuff, Uint BuffLen)
 {
-    Uint Loop;
-    Uint Num;
     Uint StateID;
     ac_msg_pid_s *MsgPid;
     ac_pid_s *Pid;
     ac_state_info_s *StateInfo;
 
     DBGASSERT(0 == BuffLen%sizeof(ac_msg_pid_s));
-    Num = BuffLen/sizeof(ac_msg_pid_s);
     MsgPid = (ac_msg_pid_s *)pBuff;
 
-    for (Loop = 0; Loop < Num; Loop++)
+    for (; MsgPid < (ac_msg_pid_s *)(pBuff + BuffLen);)
     {
         StateID = MsgPid->StateID;
 
@@ -548,6 +541,7 @@ static Uint _Ac_SetPidInfo(ac_trie_s *pTrie, Byte *pBuff, Uint BuffLen)
             StateInfo->PidNum++;
         }
         pTrie->NextIndex++;
+        MsgPid++;
     }
 
     return ERROR_SUCCESS;
@@ -783,13 +777,14 @@ static void _Ac_RecordHit(ac_state_info_s *pStateInfo, Byte *pStart,
     PattLen = (Uint16)(pCursor - pStart);
     for (;Pid < PidEnd;Pid++)
     {
-        if (PattLen > Pid->PattLen)
+        if (PattLen < Pid->PattLen)
         {
-            HitStart = pCursor - Pid->PattLen;
+            HitStart = pStart;
         }
         else
         {
-            HitStart = pStart;
+            HitStart = pCursor - Pid->PattLen;
+            HitStart++;
         }
 
         _Ac_RecordOnePid(Pid, HitStart, pCursor, pResult);
