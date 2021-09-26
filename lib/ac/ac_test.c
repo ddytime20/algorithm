@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 #include "basetype.h"
 #include "debug.h"
@@ -17,6 +19,8 @@ typedef enum pid_type
     pid_type_find,
     pid_type_main,
     pid_type_printf,
+    pid_type_Test,
+    pid_type_Main,
 }pid_type_e;
 
 typedef struct pattern
@@ -31,10 +35,15 @@ pattern_s Patterns[] = {
     {(Byte *)"main", 4, pid_type_main},
     {(Byte *)"test", 4, pid_type_test},
     {(Byte *)"printf", 6, pid_type_printf},
+    {(Byte *)"find", 4, pid_type_find},
+    {(Byte *)"number", 6, pid_type_number},
+    {(Byte *)"Testa",4, pid_type_Test},
+    {(Byte *)"Main", 4, pid_type_Main},
+    
 };
 
-Byte *String = (Byte *)"maintestestjprintfainabcdfghjkmainj";
-
+Byte *String = (Byte *)"ttttttttttmaintestestjprintfainabcdfghjkmainj";
+char *FileName = "test.txt";
 static void ac_test_result_print(Byte *pStart, Byte *pEnd)
 {
     printf("hit pid ");
@@ -47,12 +56,53 @@ static void ac_test_result_print(Byte *pStart, Byte *pEnd)
     printf("\n");
 }
 
+static Uint _Ac_TestGetString(char **ppString)
+{
+    Uint uiSize;
+    FILE *pfile;
+
+    if (access(FileName, F_OK))
+    {
+        return 0;
+    }
+   
+    pfile = fopen(FileName, "r");
+    if (NULL == pfile)
+    {
+        return 0;
+    }
+
+    fseek(pfile, 0L, SEEK_END);
+    uiSize = ftell(pfile);
+    fseek(pfile, 0, SEEK_SET);
+    *ppString = (char *)malloc(uiSize);
+    if (NULL == *ppString)
+    {
+        fclose(pfile);
+        return 0;
+    }
+
+    if (fread(*ppString, 1, uiSize, pfile))
+    {
+        fclose(pfile);
+        return uiSize;
+    }
+
+    fclose(pfile);
+    free(*ppString);
+    return 0;
+}    
+
+
 int main(int argc, char *argv[])
 {
     Uint ret;
     Uint Num;
     Uint uiLoop;
+    Uint uiStringLen;
+    char *pString;
     ac_full_result_s Result;
+
     Handle = Ac_CreateHandle();
     if (INVALID_HANDLE == Handle)
     {
@@ -86,8 +136,15 @@ int main(int argc, char *argv[])
         printf("ac compile success\n");
     }
     
+    uiStringLen = _Ac_TestGetString(&pString);
+    if (0 == uiStringLen)
+    {
+        Ac_DestroyTrie(Handle);
+        return 0;
+    }
+
     memset(&Result, 0, sizeof(ac_full_result_s));
-    Ac_FullSearch(Handle, String, strlen(String), &Result);
+    Ac_FullSearch(Handle, (Byte *)pString, uiStringLen, &Result);
     if (Result.PidNum)
     {
         int pidnum  = Result.PidNum;
@@ -105,8 +162,11 @@ int main(int argc, char *argv[])
             {
                 ac_test_result_print(hitpid->pHitStart[loop], hitpid->pHitEnd[loop]);
             }
+            printf("**************end****************\n");
         }
     }
-
+    
+    free(pString);
+    Ac_DestroyTrie(Handle);
     return 0;
 }
