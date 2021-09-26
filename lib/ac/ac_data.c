@@ -238,7 +238,7 @@ Uint Ac_AddOnePatternToTrie(ac_trie_s *pTrie, Byte *Pattern, ac_pid_s *pPid)
     return ERROR_SUCCESS;
 }
 
-void AC_FreeTmpState(ac_trie_s *pTrie)
+void Ac_FreeTmpState(ac_trie_s *pTrie)
 {
     Uint Loop;
     Uint Max;
@@ -261,4 +261,36 @@ void AC_FreeTmpState(ac_trie_s *pTrie)
     pTrie->pTmpPool = NULL;
     
     return;
+}
+
+void Ac_FreeResource(ac_trie_s *pTrie)
+{
+    if (pTrie)
+    {
+        if (pTrie->pFullStateTable)
+        {
+            AC_FREE(pTrie->pFullStateTable);
+            pTrie->pFullStateTable = NULL;
+        }
+
+        if (pTrie->pStateInfo)
+        {
+            AC_FREE(pTrie->pStateInfo);
+            pTrie->pStateInfo = NULL;
+        }
+
+        if (pTrie->pPid)
+        {
+            AC_FREE(pTrie->pPid);
+            pTrie->pPid = NULL;
+        }
+
+        if (pTrie->pNewState)
+        {
+            AC_FREE(pTrie->pNewState);
+            pTrie->pNewState = NULL;
+        }
+
+        Ac_FreeTmpState(pTrie);
+    }
 }
