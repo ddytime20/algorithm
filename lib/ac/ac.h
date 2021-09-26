@@ -33,6 +33,10 @@ extern Uint Ac_AddPattern(ACHANDLE AcHandle, Byte *Pattern, \
 
 extern Uint Ac_Compile(ACHANDLE Handle);
 
+extern void Ac_FullSearch(ACHANDLE Handle, Byte *pStart, \
+        Uint uiLen, ac_full_result_s *pResutl);
+
+extern void Ac_DestroyTrie(ACHANDLE Handle);
 
 EXTERN_C_END
 
