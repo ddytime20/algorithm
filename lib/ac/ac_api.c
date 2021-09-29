@@ -415,7 +415,7 @@ static Uint _Ac_SetStateInfo(ac_trie_s *pTrie, Byte *pBuff, Uint BuffLen)
             ChildID16 = (Uint16)AC_GET_ID(ChildID);
             if (AC_GET_FLAG(ChildID))
             {
-                ChildID16 = AC_GET_FLAG(ChildID16);
+                ChildID16 = AC_SET_FLAG16(ChildID16);
             }
 
             SubState16 = StateTable16[State->StateID];
