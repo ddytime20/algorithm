@@ -84,6 +84,7 @@ typedef struct ac_trie
     Uint PidNum;
     Uint StateNum;
     Uint NextIndex;
+	Uint16 AcceptNum;
     Byte bCompile;
 
     Uint FullStateNum;
@@ -109,6 +110,7 @@ typedef struct ac_msg_tree
 {
     Uint PidNum;
     Uint StateNum;
+    Uint16 AcceptNum;
 }ac_msg_tree_s;
 
 
