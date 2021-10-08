@@ -36,7 +36,7 @@
  */
 #define ERROR_SUCCESS                    0x0u
 #define ERROR_FAILED                     0x1u
-#define ERROR_MEM                        0x2u
+#define ERROR_MEMORY                     0x2u
 
 #ifdef DEBUG_VERSION 
 extern void Assert(char *filename, unsigned int line);
