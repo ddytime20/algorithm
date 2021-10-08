@@ -22,7 +22,7 @@ static Uint _EnlargeMemPool(ac_mem_pool_s *pstMemPool)
     pPool = AC_MALLOC(ulPoolLen);
     if (!pPool)
     {
-        return ERROR_MEM;
+        return ERROR_MEMORY;
     }
     memset(pPool, 0, ulPoolLen);
 
@@ -31,7 +31,7 @@ static Uint _EnlargeMemPool(ac_mem_pool_s *pstMemPool)
     {
         AC_PRINTF("ac_mem, realloc pool list failed \n");
         AC_FREE(pPool);
-        return ERROR_MEM;
+        return ERROR_MEMORY;
     }
     pstMemPool->PoolList = pPoolList;
     pstMemPool->PoolList[pstMemPool->PoolNum] = pPool;
