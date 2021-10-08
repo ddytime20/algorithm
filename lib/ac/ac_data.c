@@ -51,7 +51,7 @@ Uint _AllocTmpState(ac_trie_s *pstTrie)
     TmpPool = AC_MALLOC(sizeof(ac_mem_pool_s));
     if (NULL == TmpPool)
     {
-        return ERROR_MEM;
+        return ERROR_MEMORY;
     }
     pstTrie->pTmpPool = TmpPool;
 
@@ -186,7 +186,7 @@ Uint Ac_AddPid(ac_trie_s *pTrie, ac_pid_s *pPid, ac_tmp_state_s *pState)
         PidList = AC_REALLOC(pState->PidList, (sizeof(ac_pid_s) * (pState->PidNum + 1)));
         if (NULL == PidList)
         {
-            return ERROR_MEM;
+            return ERROR_MEMORY;
         }
         pState->PidList = PidList;
         memcpy(pState->PidList + pState->PidNum, pPid, sizeof(ac_pid_s));
