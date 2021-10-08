@@ -17,6 +17,8 @@
 #define AC_MSG_CONTINUE   0UL
 #define AC_MSG_FULL       1UL
 
+static Uint g_uiFullStateMax;
+
 static void _Ac_InitBatchIterate(ac_batch_iterate_s *pBatch)
 {
     memset(pBatch, 0, sizeof(ac_batch_iterate_s));
@@ -40,6 +42,7 @@ static Uint _Ac_GetTrieInfo(ac_trie_s *pTrie, ac_batch_iterate_s *pBatch,
     tree = (ac_msg_tree_s *)(head + 1);
     tree->PidNum = pTrie->PidNum;
     tree->StateNum = pTrie->StateNum;
+    tree->AcceptNum = pTrie->AcceptNum;
 
     pBatch->Batch[0] = AC_MSG_STATE;
 
@@ -339,7 +342,7 @@ static Uint _Ac_MallocTrieResource(ac_trie_s *pTrie, Uint uiPidNum, Uint uiState
     if (NULL == pData)
     {
         AC_PRINTF("ac_api, out of memory\n");
-        return ERROR_MEM;
+        return ERROR_MEMORY;
     }
     memset(pData, 0, Len);
     pTrie->pFullStateTable = pData;
@@ -348,7 +351,7 @@ static Uint _Ac_MallocTrieResource(ac_trie_s *pTrie, Uint uiPidNum, Uint uiState
     if (NULL == StateInfo)
     {
         AC_PRINTF("ac_api, out of memory \n");
-        return ERROR_MEM;
+        return ERROR_MEMORY;
     }
 
     memset(StateInfo, 0, sizeof(ac_state_info_s) *uiStateNum);
@@ -358,7 +361,7 @@ static Uint _Ac_MallocTrieResource(ac_trie_s *pTrie, Uint uiPidNum, Uint uiState
     if (NULL == PidInfo)
     {
         AC_PRINTF("ac_api, out of memory \n");
-        return ERROR_MEM;
+        return ERROR_MEMORY;
     }
     pTrie->pPid = PidInfo;
     pTrie->StateNum = uiStateNum;
@@ -376,6 +379,7 @@ static Uint _Ac_SetTrieInfo(ac_trie_s *pTrie, Byte *pBuff, Uint BuffLen)
     Uint StateNum;
 
     tree = (ac_msg_tree_s *)pBuff;
+    pTrie->AcceptNum = tree->AcceptNum;
     PidNum = tree->PidNum;
     StateNum = tree->StateNum;
     
@@ -685,7 +689,7 @@ Uint Ac_Compile(ACHANDLE Handle)
     pBuff = AC_MALLOC(AC_BUFF_MAX);
     if (NULL == pBuff)
     {
-        return ERROR_MEM;
+        return ERROR_MEMORY;
     }
 
     _Ac_InitBatchIterate(&Batch);
@@ -831,6 +835,48 @@ static void _Ac_FullSearch8(ac_trie_s *pTrie, Byte *pStart,
     return;
 }
 
+static void _Ac_FullSearch16ex(ac_trie_s *pTrie, Byte *pStart,
+        Uint uiLen, ac_full_result_s *pResult)
+{
+    //Uint FullStateMax;
+    Uint16 StateID;
+    Uint16 BaseID;
+    Uint16 AcceptNum;
+    Byte *Cursor;
+    Byte *End;
+    Byte Ascii;
+    AC_STATE_ROW16 *StateRow;
+
+    StateRow = (AC_STATE_ROW16 *)pTrie->pFullStateTable;
+    if (NULL == StateRow)
+    {
+        return;
+    }
+
+    AcceptNum = pTrie->AcceptNum;
+    //FullStateMax = pTrie->FullStateNum;
+    Cursor = pStart;
+    End = pStart + uiLen;
+    StateID = 0;
+
+    do
+    {
+        Ascii = *Cursor;
+        StateID = StateRow[StateID][Ascii];
+        if (AcceptNum <= StateID)
+        {
+            BaseID = AC_GET_ID16(StateID);
+            _Ac_RecordHit(&pTrie->pStateInfo[BaseID],pStart, Cursor, pResult);
+            StateID = BaseID;
+        }
+
+        Cursor++;
+    }while(Cursor != End);
+
+    return;
+
+}
+
 static void _Ac_FullSearch16(ac_trie_s *pTrie, Byte *pStart,
         Uint uiLen, ac_full_result_s *pResult)
 {
@@ -889,7 +935,7 @@ void Ac_FullSearch(ACHANDLE Handle, Byte *pStart, Uint uiLen,
     else if (Trie->StateNum > AC_STATE_32767)
     {
         AC_PRINTF("trie state number %d\n", Trie->StateNum);
-        return;
+        _Ac_FullSearch16ex(Trie, pStart, uiLen, pResult);
     }
     else if (Trie->StateNum > AC_STATE_127)
     {
