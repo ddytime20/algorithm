@@ -190,6 +190,7 @@ static Uint _InheritFailPid(ac_trie_s *pTrie, ac_tmp_state_s *pState, ac_tmp_sta
         return ERROR_SUCCESS; 
     }
 
+    AC_PRINTF("ac inherit failed state \n");
     for (i = 0; i < pFailState->PidNum; i++)
     {
         Pid = &pFailState->PidList[i];
@@ -231,26 +232,70 @@ static Uint _ReAssignStateID(ac_trie_s *pTrie)
     Uint NewStateID;
     Uint NewStateBase;
     Uint *pNewState;
+    Uint16 *pAccept;
+    Uint16 AcceptCount = 0;
+    Uint16 Loop;
 
     pNewState = AC_MALLOC(sizeof(Uint) * pTrie->StateNum);
     if (NULL == pNewState)
     {
-        return ERROR_MEM;
+        return ERROR_MEMORY;
     }
     memset(pNewState, 0, (sizeof(Uint) * pTrie->StateNum));
     pTrie->pNewState = pNewState;
     NewStateBase = 0;
 
-    DLIST_FOREACH_ENTRY(&pTrie->StateList, State, Node)
+    if ((pTrie->StateNum > AC_STATE_32767) && (pTrie->StateNum <= AC_STATE_65535))
     {
-        NewStateID = NewStateBase;
-        NewStateBase++;
-        // set pid flag
-        if (State->PidNum)
+        pAccept = AC_MALLOC(pTrie->StateNum * sizeof(Uint16));
+        if (NULL == pAccept)
         {
-            NewStateID = AC_SET_FLAG(NewStateID);
+            AC_FREE(pNewState);
+            pTrie->pNewState = NULL;
+            return ERROR_MEMORY;
         }
-        pNewState[State->StateID] = NewStateID;
+        memset(pAccept, 0, sizeof(Uint16)*pTrie->StateNum);
+        DLIST_FOREACH_ENTRY(&pTrie->StateList, State, Node)
+        {
+            if (State->PidNum != 0)
+            {
+                pAccept[AcceptCount] = State->StateID;
+                AcceptCount++;
+            }
+            else
+            {
+                NewStateID = NewStateBase;
+                NewStateBase++;
+                pNewState[State->StateID] = NewStateID;
+            }
+        }
+
+        pTrie->AcceptNum = NewStateBase;
+        for (Loop = 0; Loop < AcceptCount; Loop++)
+        {
+            NewStateID = (Uint)pAccept[Loop];
+            pNewState[NewStateID] = NewStateBase;
+            NewStateBase++;
+        }
+
+        if (NULL != pAccept)
+        {
+            AC_FREE(pAccept);
+        }
+    }
+    else
+    {
+        DLIST_FOREACH_ENTRY(&pTrie->StateList, State, Node)
+        {
+            NewStateID = NewStateBase;
+            NewStateBase++;
+            // set pid flag
+            if (State->PidNum)
+            {
+                NewStateID = AC_SET_FLAG(NewStateID);
+            }
+            pNewState[State->StateID] = NewStateID;
+        }
     }
     
     return ERROR_SUCCESS;
