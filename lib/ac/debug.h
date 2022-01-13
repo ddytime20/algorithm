@@ -7,6 +7,8 @@
 #ifndef __DEBUG_H__
 #define __DEBUG_H__
 
+EXTERN_C_BEGIN
+
 #ifndef _STDARG_H
 #include <stdarg.h>
 #endif
@@ -27,5 +29,6 @@ void Ac_Printf(const char *, const char *, const char *, ...) PRINTF_ATTR(3,4);
    }while(0) 
 
 
+EXTERN_C_END
 
 #endif
